@@ -5,16 +5,81 @@
 #the-canvas {
     border: 1px solid;
 }
+#page_num,#xpos,#ypos {
+    width: 50px;
+}
 </style>
 </head>
 <body>
-    <p><input type="file" id="files" name="files[]" multiple /></p>
+    <div>
+        <button id="prev">Previous</button>
+        <button id="next">Next</button>
+        &nbsp; &nbsp;
+        <span>Page: <input type="text" id="page_num" /> / <span id="page_count"></span></span>
+        &nbsp; &nbsp;
+        <span>X: <input type="text" id="xpos"/></span>
+        <span>Y: <input type="text" id="ypos"/></span>
+    </div>
+    <div>
+        <input type="file" id="files" name="files[]" multiple /></p>
+    </div>
     <canvas id="the-canvas"></canvas>
 </body>
 <script src="https://mozilla.github.io/pdf.js/build/pdf.js"></script>
 <script>
 var pdfjsLib = window['pdfjs-dist/build/pdf'];
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://mozilla.github.io/pdf.js/build/pdf.worker.js';
+var pdfDoc = null,
+    pageNum = 1,
+    pageRendering = false,
+    pageNumPending = null,
+    scale = 1.2,
+    canvas = document.getElementById('the-canvas'),
+    ctx = canvas.getContext('2d');
+function renderPage(num) {
+    pageRendering = true;
+    pdfDoc.getPage(num).then(function(page) {
+        var viewport = page.getViewport({scale: scale});
+        canvas.height = viewport.height;
+        canvas.width = viewport.width;
+        var renderContext = {
+            canvasContext: ctx,
+            viewport: viewport
+        };
+        var renderTask = page.render(renderContext);
+        renderTask.promise.then(function() {
+            pageRendering = false;
+            if (pageNumPending !== null) {
+                renderPage(pageNumPending);
+                pageNumPending = null;
+            }
+        });
+    });
+    document.getElementById('page_num').value = num;
+}
+function queueRenderPage(num) {
+  if (pageRendering) {
+    pageNumPending = num;
+  } else {
+    renderPage(num);
+  }
+}
+function onPrevPage() {
+  if (pageNum <= 1) {
+    return;
+  }
+  pageNum--;
+  queueRenderPage(pageNum);
+}
+document.getElementById('prev').addEventListener('click', onPrevPage);
+function onNextPage() {
+  if (pageNum >= pdfDoc.numPages) {
+    return;
+  }
+  pageNum++;
+  queueRenderPage(pageNum);
+}
+document.getElementById('next').addEventListener('click', onNextPage);
 function handleFileSelect(evt) {
     var files = evt.target.files;
     for (var i = 0, f; f = files[i]; i++) {
@@ -29,32 +94,10 @@ function handleFileSelect(evt) {
                     url:e.target.result,
                     cMapUrl:'https://mozilla.github.io/pdf.js/web/cmaps/',
                     cMapPacked:true});
-                loadingTask.promise.then(function(pdf) {
-                    console.log('PDF loaded');
-                
-                    var pageNumber = 1;
-                    pdf.getPage(pageNumber).then(function(page) {
-                    console.log('Page loaded');
-                    
-                    var scale = 1.5;
-                    var viewport = page.getViewport({scale: scale});
-
-                    var canvas = document.getElementById('the-canvas');
-                    var context = canvas.getContext('2d');
-                    canvas.height = viewport.height;
-                    canvas.width = viewport.width;
-
-                    var renderContext = {
-                        canvasContext: context,
-                        viewport: viewport
-                    };
-                    var renderTask = page.render(renderContext);
-                    renderTask.promise.then(function () {
-                            console.log('Page rendered');
-                        });
-                    });
-                }, function (reason) {
-                    console.error(reason);
+                loadingTask.promise.then(function(pdfDoc_) {
+                    pdfDoc = pdfDoc_;
+                    document.getElementById('page_count').textContent = pdfDoc.numPages;
+                    renderPage(pageNum);
                 });
             };
         })(f);
@@ -65,9 +108,15 @@ function handleFileSelect(evt) {
 
 document.body.addEventListener('change', handleFileSelect, false);
 document.getElementById('the-canvas').onclick = function( event ) {
-    var x = event.pageX;
-    var y = event.pageY;
-    console.log(x+','+y);
+    var clickX = event.pageX;
+    var clickY = event.pageY;
+    var clientRect = this.getBoundingClientRect() ;
+	var positionX = clientRect.left + window.pageXOffset ;
+	var positionY = clientRect.bottom + window.pageYOffset ;
+	var x = 210 * (clickX - positionX) / clientRect.width;
+	var y = 297 * (positionY - clickY) / clientRect.height;
+    document.getElementById('xpos').value = Math.round(x);
+    document.getElementById('ypos').value = Math.round(y);
 }
 </script>
 </html>
