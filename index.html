@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+#the-canvas {
+    border: 1px solid;
+}
+</style>
+</head>
+<body>
+    <p><input type="file" id="files" name="files[]" multiple /></p>
+    <canvas id="the-canvas"></canvas>
+</body>
+<script src="https://mozilla.github.io/pdf.js/build/pdf.js"></script>
+<script>
+var pdfjsLib = window['pdfjs-dist/build/pdf'];
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://mozilla.github.io/pdf.js/build/pdf.worker.js';
+function handleFileSelect(evt) {
+    var files = evt.target.files;
+    for (var i = 0, f; f = files[i]; i++) {
+        if (!f.type.match('application/pdf')) {
+            continue;
+        }
+
+        var reader = new FileReader();
+        reader.onload = (function(theFile) {
+            return function(e) {
+                var loadingTask = pdfjsLib.getDocument({
+                    url:e.target.result,
+                    cMapUrl:'https://mozilla.github.io/pdf.js/web/cmaps/',
+                    cMapPacked:true});
+                loadingTask.promise.then(function(pdf) {
+                    console.log('PDF loaded');
+                
+                    var pageNumber = 1;
+                    pdf.getPage(pageNumber).then(function(page) {
+                    console.log('Page loaded');
+                    
+                    var scale = 1.5;
+                    var viewport = page.getViewport({scale: scale});
+
+                    var canvas = document.getElementById('the-canvas');
+                    var context = canvas.getContext('2d');
+                    canvas.height = viewport.height;
+                    canvas.width = viewport.width;
+
+                    var renderContext = {
+                        canvasContext: context,
+                        viewport: viewport
+                    };
+                    var renderTask = page.render(renderContext);
+                    renderTask.promise.then(function () {
+                            console.log('Page rendered');
+                        });
+                    });
+                }, function (reason) {
+                    console.error(reason);
+                });
+            };
+        })(f);
+        
+        reader.readAsDataURL(f);
+    }
+}
+
+document.body.addEventListener('change', handleFileSelect, false);
+document.getElementById('the-canvas').onclick = function( event ) {
+    var x = event.pageX;
+    var y = event.pageY;
+    console.log(x+','+y);
+}
+</script>
+</html>
