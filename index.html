@@ -25,12 +25,12 @@
       margin-left: 10px;
     }
 
-    #canvas-wrapper {
+    #canvas_wrapper {
       position: relative;
     }
 
-    #canvas-wrapper canvas,
-    #canvas-wrapper div {
+    #canvas_wrapper canvas,
+    #canvas_wrapper div {
       position: absolute;
       top: 0;
       left: 0;
@@ -40,35 +40,122 @@
       cursor: crosshair;
     }
 
-    #page_num,
-    #sxpos,
-    #sypos,
-    #expos,
-    #eypos {
+    #pos_div {
+      position: relative;
+    }
+
+    .help {
+      display: none;
+      width: 270px;
+      position: absolute;
+      top: -5px;
+      left: 245px;
+      padding: 10px;
+      border-radius: 3px;
+      background: #bbb;
+      color: #555;
+    }
+
+    .help:after {
+      position: absolute;
+      width: 0;
+      height: 0;
+      left: -19px;
+      bottom: 5px;
+      border: solid transparent;
+      border-right-color: #bbb;
+      border-width: 10px;
+      pointer-events: none;
+      content: " ";
+    }
+
+    .clip button:hover+.help {
+      display: block;
+    }
+
+    .fl {
+      float: left;
+    }
+
+    .tc {
+      text-align: center;
+    }
+
+    .w50 {
       width: 50px;
+    }
+
+    .mb5 {
+      margin-bottom: 5px;
+    }
+
+    .mr20 {
+      margin-right: 20px;
+    }
+
+    .mr5 {
+      margin-right: 5px;
     }
   </style>
 </head>
 
 <body>
   <div id="toolbar">
-    <div>
-      <input type="file" id="files" name="files[]" multiple />
+    <div class="fl mr20">
+      <div class="mb5">
+        <input type="file" id="files" name="files[]" multiple />
+      </div>
+      <div class="fl mr20">
+        <button id="prev">前ページ</button>
+        <button id="next">次ページ</button>
+      </div>
+      <div class="fl mr20">
+        ページ：<input type="text" id="page_num" class="w50" />
+        /
+        <span id="page_count"></span>
+      </div>
     </div>
-    <div>
-      <button id="prev">Previous</button>
-      <button id="next">Next</button>
-      &nbsp; &nbsp;
-      <span>Page: <input type="text" id="page_num" /> / <span id="page_count"></span></span>
-      &nbsp; &nbsp;
-      <span>SX: <input type="text" id="sxpos" /></span>
-      <span>SY: <input type="text" id="sypos" /></span>
-      <span>EX: <input type="text" id="expos" /></span>
-      <span>EY: <input type="text" id="eypos" /></span>
+    <div class="fl" id="pos_div">
+      <div class="fl mr5 tc">
+        <div class="mb5">
+          <input type="text" class="w50" id="sxpos" />
+        </div>
+        <div class="clip">
+          <button id="sx_btn">左下X</button>
+          <p class="help">クリックでクリップボードにコピー</p>
+        </div>
+      </div>
+      <div class="fl mr5 tc">
+        <div class="mb5">
+          <input type="text" class="w50" id="sypos" />
+        </div>
+        <div class="clip">
+          <button id="sy_btn">左下Y</button>
+          <p class="help">クリックでクリップボードにコピー</p>
+        </div>
+      </div>
+      <div class="fl mr5 tc">
+        <div class="mb5">
+          <input type="text" class="w50" id="expos" />
+        </div>
+        <div class="clip">
+          <button id="ex_btn">右上X</button>
+          <p class="help">クリックでクリップボードにコピー</p>
+        </div>
+      </div>
+      <div class="fl mr5 tc">
+        <div class="mb5">
+          <input type="text" class="w50" id="eypos" />
+        </div>
+        <div class="clip">
+          <button id="ey_btn">右上Y</button>
+          <p class="help">クリックでクリップボードにコピー</p>
+        </div>
+      </div>
     </div>
   </div>
   <div id="container">
-    <div id="canvas-wrapper">
+    <div id="canvas_wrapper">
       <canvas id="canvas1"></canvas>
       <canvas id="canvas2"></canvas>
     </div>
@@ -207,11 +294,33 @@
   }
 
   function draw() {
+    ctx2.strokeStyle = 'red';
     ctx2.setLineDash([2]);
     ctx2.strokeRect(rect.startX, rect.startY, rect.w, rect.h);
   }
 
   init();
+
+  function clipSX() {
+    document.getElementById('sxpos').select();
+    document.execCommand('Copy');
+  }
+  function clipSY() {
+    document.getElementById('sypos').select();
+    document.execCommand('Copy');
+  }
+  function clipEX() {
+    document.getElementById('expos').select();
+    document.execCommand('Copy');
+  }
+  function clipEY() {
+    document.getElementById('eypos').select();
+    document.execCommand('Copy');
+  }
+  document.getElementById('sx_btn').addEventListener('click', clipSX);
+  document.getElementById('sy_btn').addEventListener('click', clipSY);
+  document.getElementById('ex_btn').addEventListener('click', clipEX);
+  document.getElementById('ey_btn').addEventListener('click', clipEY);
 </script>
 
 </html>
