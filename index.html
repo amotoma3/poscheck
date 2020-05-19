@@ -16,7 +16,7 @@
 #canvas2 {
     cursor: crosshair;
 }
-#page_num,#xpos,#ypos {
+#page_num,#sxpos,#sypos,#expos,#eypos {
     width: 50px;
 }
 </style>
@@ -28,8 +28,10 @@
         &nbsp; &nbsp;
         <span>Page: <input type="text" id="page_num" /> / <span id="page_count"></span></span>
         &nbsp; &nbsp;
-        <span>X: <input type="text" id="xpos"/></span>
-        <span>Y: <input type="text" id="ypos"/></span>
+        <span>SX: <input type="text" id="sxpos"/></span>
+        <span>SY: <input type="text" id="sypos"/></span>
+        <span>EX: <input type="text" id="expos"/></span>
+        <span>EY: <input type="text" id="eypos"/></span>
     </div>
     <div>
         <input type="file" id="files" name="files[]" multiple />
@@ -135,10 +137,14 @@ document.getElementById('canvas2').onclick = function( event ) {
     var clientRect = this.getBoundingClientRect() ;
 	var positionX = clientRect.left + window.pageXOffset ;
 	var positionY = clientRect.bottom + window.pageYOffset ;
-	var x = 210 * (clickX - positionX) / clientRect.width;
-	var y = 297 * (positionY - clickY) / clientRect.height;
-    document.getElementById('xpos').value = Math.round(x);
-    document.getElementById('ypos').value = Math.round(y);
+	var x1 = 210 * (clickX - positionX) / clientRect.width;
+	var y1 = 297 * (positionY - clickY) / clientRect.height;
+	var x2 = 210 * (rect.startX + clientRect.left - positionX) / clientRect.width;
+	var y2 = 297 * (positionY - rect.startY - clientRect.top) / clientRect.height;
+    document.getElementById('sxpos').value = Math.round(Math.min(x1,x2));
+    document.getElementById('sypos').value = Math.round(Math.min(y1,y2));
+    document.getElementById('expos').value = Math.round(Math.max(x1,x2));
+    document.getElementById('eypos').value = Math.round(Math.max(y1,y2));
 }
 
 function init() {
