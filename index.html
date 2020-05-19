@@ -2,8 +2,19 @@
 <html>
 <head>
 <style>
+#canvas-wrapper {
+    position: relative;
+}
+#canvas-wrapper canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+}
 #the-canvas {
     border: 1px solid;
+}
+#canvas2 {
+    cursor: crosshair;
 }
 #page_num,#xpos,#ypos {
     width: 50px;
@@ -21,14 +32,17 @@
         <span>Y: <input type="text" id="ypos"/></span>
     </div>
     <div>
-        <input type="file" id="files" name="files[]" multiple /></p>
+        <input type="file" id="files" name="files[]" multiple />
     </div>
-    <canvas id="the-canvas"></canvas>
+    <div id="canvas-wrapper">
+        <canvas id="the-canvas"></canvas>
+        <canvas id="canvas2"></canvas>
+    </div>
 </body>
-<script src="https://mozilla.github.io/pdf.js/build/pdf.js"></script>
+<script src="https://mozilla.github.io/pdf.js/es5/build/pdf.js"></script>
 <script>
 var pdfjsLib = window['pdfjs-dist/build/pdf'];
-pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://mozilla.github.io/pdf.js/build/pdf.worker.js';
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://mozilla.github.io/pdf.js/es5/build/pdf.worker.js';
 var pdfDoc = null,
     pageNum = 1,
     pageRendering = false,
@@ -36,12 +50,20 @@ var pdfDoc = null,
     scale = 1.2,
     canvas = document.getElementById('the-canvas'),
     ctx = canvas.getContext('2d');
+
+var canvas2 = document.getElementById('canvas2'),
+    ctx2 = canvas2.getContext('2d'),
+    rect = {},
+    drag = false;
+
 function renderPage(num) {
     pageRendering = true;
     pdfDoc.getPage(num).then(function(page) {
         var viewport = page.getViewport({scale: scale});
         canvas.height = viewport.height;
         canvas.width = viewport.width;
+        canvas2.height = viewport.height;
+        canvas2.width = viewport.width;
         var renderContext = {
             canvasContext: ctx,
             viewport: viewport
@@ -107,7 +129,7 @@ function handleFileSelect(evt) {
 }
 
 document.body.addEventListener('change', handleFileSelect, false);
-document.getElementById('the-canvas').onclick = function( event ) {
+document.getElementById('canvas2').onclick = function( event ) {
     var clickX = event.pageX;
     var clickY = event.pageY;
     var clientRect = this.getBoundingClientRect() ;
@@ -118,5 +140,37 @@ document.getElementById('the-canvas').onclick = function( event ) {
     document.getElementById('xpos').value = Math.round(x);
     document.getElementById('ypos').value = Math.round(y);
 }
+
+function init() {
+  canvas2.addEventListener('mousedown', mouseDown, false);
+  canvas2.addEventListener('mouseup', mouseUp, false);
+  canvas2.addEventListener('mousemove', mouseMove, false);
+}
+
+function mouseDown(e) {
+  rect.startX = e.pageX - this.parentNode.offsetLeft;
+  rect.startY = e.pageY - this.parentNode.offsetTop;
+  drag = true;
+}
+
+function mouseUp() {
+  drag = false;
+    //ctx.clearRect(0,0,canvas.width,canvas.height);
+}
+function mouseMove(e) {
+  if (drag) {
+    rect.w = (e.pageX - this.parentNode.offsetLeft) - rect.startX;
+    rect.h = (e.pageY - this.parentNode.offsetTop) - rect.startY ;
+    ctx2.clearRect(0,0,canvas2.width,canvas2.height);
+    draw();
+  }
+}
+
+function draw() {
+    ctx2.setLineDash([6]);
+  ctx2.strokeRect(rect.startX, rect.startY, rect.w, rect.h);
+}
+
+init();
 </script>
 </html>
