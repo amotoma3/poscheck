@@ -274,7 +274,7 @@
         return function (e) {
           var loadingTask = pdfjsLib.getDocument({
             url: e.target.result,
-            cMapUrl: 'https://mozilla.github.io/pdf.js/web/cmaps/',
+            cMapUrl: 'https://mozilla.github.io/pdf.js/es5/web/cmaps/',
             cMapPacked: true
           });
           loadingTask.promise.then(function (pdfDoc_) {
