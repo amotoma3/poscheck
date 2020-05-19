@@ -2,6 +2,7 @@
 <html>
 
 <head>
+  <meta charset="Shift_JIS">
   <style>
     body {
       margin: 0;
@@ -170,13 +171,15 @@
     pageRendering = false,
     pageNumPending = null,
     scale = 1.2,
+    wrapper = document.getElementById('canvas_wrapper'),
     canvas = document.getElementById('canvas1'),
-    ctx = canvas.getContext('2d');
-
-  var canvas2 = document.getElementById('canvas2'),
+    canvas2 = document.getElementById('canvas2'),
+    ctx = canvas.getContext('2d'),
     ctx2 = canvas2.getContext('2d'),
     rect = {},
-    drag = false;
+    drag = false,
+    widthmm,
+    heightmm;
 
   function renderPage(num) {
     pageRendering = true;
@@ -186,6 +189,8 @@
       canvas.width = viewport.width;
       canvas2.height = viewport.height;
       canvas2.width = viewport.width;
+      widthmm = page.view[2] / 595.276 * 210;
+      heightmm = page.view[3] / 841.89 * 297;
       var renderContext = {
         canvasContext: ctx,
         viewport: viewport
@@ -250,55 +255,68 @@
       reader.readAsDataURL(f);
     }
   }
-
   document.body.addEventListener('change', handleFileSelect, false);
-  document.getElementById('canvas2').onclick = function (event) {
-    var clickX = event.pageX;
-    var clickY = event.pageY;
-    var clientRect = this.getBoundingClientRect();
-    var positionX = clientRect.left + window.pageXOffset;
-    var positionY = clientRect.bottom + window.pageYOffset;
-    var x1 = 210 * (clickX - positionX) / clientRect.width;
-    var y1 = 297 * (positionY - clickY) / clientRect.height;
-    var x2 = 210 * (rect.startX + this.parentNode.offsetLeft - positionX) / clientRect.width;
-    var y2 = 297 * (positionY - rect.startY - this.parentNode.offsetTop) / clientRect.height;
-    document.getElementById('sxpos').value = Math.round(Math.min(x1, x2));
-    document.getElementById('sypos').value = Math.round(Math.min(y1, y2));
-    document.getElementById('expos').value = Math.round(Math.max(x1, x2));
-    document.getElementById('eypos').value = Math.round(Math.max(y1, y2));
-  }
 
   function init() {
     canvas2.addEventListener('mousedown', mouseDown, false);
     canvas2.addEventListener('mouseup', mouseUp, false);
     canvas2.addEventListener('mousemove', mouseMove, false);
   }
-
+  function convertClickToPos(cx, cy) {
+    var clientRect = canvas2.getBoundingClientRect();
+    var positionX = clientRect.left + window.pageXOffset;
+    var positionY = clientRect.bottom + window.pageYOffset;
+    var xpos = widthmm * (cx - positionX) / clientRect.width;
+    var ypos = heightmm * (positionY - cy) / clientRect.height;
+    return [Math.round(xpos), Math.round(ypos)];
+  }
+  function convertPosToClick(xpos, ypos) {
+    var clientRect = canvas2.getBoundingClientRect();
+    var positionX = clientRect.left + window.pageXOffset;
+    var positionY = clientRect.bottom + window.pageYOffset;
+    var cx = positionX + xpos * clientRect.width / widthmm;
+    var cy = positionY - ypos * clientRect.height / heightmm;
+    return [cx, cy];
+  }
+  function convertRoundClickXY(cx, cy) {
+    var xypos = convertClickToPos(cx, cy);
+    return convertPosToClick(xypos[0], xypos[1]);
+  }
   function mouseDown(e) {
-    rect.startX = e.pageX - this.parentNode.offsetLeft;
-    rect.startY = e.pageY - this.parentNode.offsetTop;
+    var cxy = convertRoundClickXY(e.pageX, e.pageY);
+    rect.startX = cxy[0];
+    rect.startY = cxy[1];
     drag = true;
   }
-
   function mouseUp() {
     drag = false;
-    //ctx.clearRect(0,0,canvas.width,canvas.height);
+    var clickX = event.pageX;
+    var clickY = event.pageY;
+    var xy1 = convertClickToPos(clickX, clickY);
+    var xy2 = convertClickToPos(rect.startX, rect.startY);
+    if (xy1[0] == xy2[0] && xy1[1] == xy2[1]) return;
+    document.getElementById('sxpos').value = Math.min(xy1[0], xy2[0]);
+    document.getElementById('sypos').value = Math.min(xy1[1], xy2[1]);
+    document.getElementById('expos').value = Math.max(xy1[0], xy2[0]);
+    document.getElementById('eypos').value = Math.max(xy1[1], xy2[1]);
   }
   function mouseMove(e) {
     if (drag) {
-      rect.w = (e.pageX - this.parentNode.offsetLeft) - rect.startX;
-      rect.h = (e.pageY - this.parentNode.offsetTop) - rect.startY;
+      var cxy = convertRoundClickXY(e.pageX, e.pageY);
+      rect.w = cxy[0] - rect.startX;
+      rect.h = cxy[1] - rect.startY;
       ctx2.clearRect(0, 0, canvas2.width, canvas2.height);
       draw();
     }
   }
+  function posChange() {
 
+  }
   function draw() {
     ctx2.strokeStyle = 'red';
     ctx2.setLineDash([2]);
-    ctx2.strokeRect(rect.startX, rect.startY, rect.w, rect.h);
+    ctx2.strokeRect(rect.startX - wrapper.offsetLeft, rect.startY - wrapper.offsetTop, rect.w, rect.h);
   }
-
   init();
 
   function clipSX() {
