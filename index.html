@@ -1,182 +1,202 @@
 <!DOCTYPE html>
 <html>
+
 <head>
-<style>
-#canvas-wrapper {
-    position: relative;
-}
-#canvas-wrapper canvas {
-    position: absolute;
-    top: 0;
-    left: 0;
-}
-#the-canvas {
-    border: 1px solid;
-}
-#canvas2 {
-    cursor: crosshair;
-}
-#page_num,#sxpos,#sypos,#expos,#eypos {
-    width: 50px;
-}
-</style>
+  <style>
+    body {
+      color: #eee;
+      background-color: #444;
+    }
+
+    #content {
+      margin: 10px;
+    }
+
+    #canvas-wrapper {
+      position: relative;
+    }
+
+    #canvas-wrapper canvas,
+    #canvas-wrapper div {
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+
+    #canvas2 {
+      cursor: crosshair;
+    }
+
+    #page_num,
+    #sxpos,
+    #sypos,
+    #expos,
+    #eypos {
+      width: 50px;
+    }
+  </style>
 </head>
+
 <body>
-    <div>
-        <button id="prev">Previous</button>
-        <button id="next">Next</button>
-        &nbsp; &nbsp;
-        <span>Page: <input type="text" id="page_num" /> / <span id="page_count"></span></span>
-        &nbsp; &nbsp;
-        <span>SX: <input type="text" id="sxpos"/></span>
-        <span>SY: <input type="text" id="sypos"/></span>
-        <span>EX: <input type="text" id="expos"/></span>
-        <span>EY: <input type="text" id="eypos"/></span>
-    </div>
-    <div>
-        <input type="file" id="files" name="files[]" multiple />
-    </div>
+  <div>
+    <button id="prev">Previous</button>
+    <button id="next">Next</button>
+    &nbsp; &nbsp;
+    <span>Page: <input type="text" id="page_num" /> / <span id="page_count"></span></span>
+    &nbsp; &nbsp;
+    <span>SX: <input type="text" id="sxpos" /></span>
+    <span>SY: <input type="text" id="sypos" /></span>
+    <span>EX: <input type="text" id="expos" /></span>
+    <span>EY: <input type="text" id="eypos" /></span>
+  </div>
+  <div>
+    <input type="file" id="files" name="files[]" multiple />
+  </div>
+  <div id="content">
     <div id="canvas-wrapper">
-        <canvas id="the-canvas"></canvas>
-        <canvas id="canvas2"></canvas>
+      <canvas id="canvas1"></canvas>
+      <canvas id="canvas2"></canvas>
     </div>
+  </div>
 </body>
 <script src="https://mozilla.github.io/pdf.js/es5/build/pdf.js"></script>
 <script>
-var pdfjsLib = window['pdfjs-dist/build/pdf'];
-pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://mozilla.github.io/pdf.js/es5/build/pdf.worker.js';
-var pdfDoc = null,
+  var pdfjsLib = window['pdfjs-dist/build/pdf'];
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://mozilla.github.io/pdf.js/es5/build/pdf.worker.js';
+  var pdfDoc = null,
     pageNum = 1,
     pageRendering = false,
     pageNumPending = null,
     scale = 1.2,
-    canvas = document.getElementById('the-canvas'),
+    canvas = document.getElementById('canvas1'),
     ctx = canvas.getContext('2d');
 
-var canvas2 = document.getElementById('canvas2'),
+  var canvas2 = document.getElementById('canvas2'),
     ctx2 = canvas2.getContext('2d'),
     rect = {},
     drag = false;
 
-function renderPage(num) {
+  function renderPage(num) {
     pageRendering = true;
-    pdfDoc.getPage(num).then(function(page) {
-        var viewport = page.getViewport({scale: scale});
-        canvas.height = viewport.height;
-        canvas.width = viewport.width;
-        canvas2.height = viewport.height;
-        canvas2.width = viewport.width;
-        var renderContext = {
-            canvasContext: ctx,
-            viewport: viewport
-        };
-        var renderTask = page.render(renderContext);
-        renderTask.promise.then(function() {
-            pageRendering = false;
-            if (pageNumPending !== null) {
-                renderPage(pageNumPending);
-                pageNumPending = null;
-            }
-        });
+    pdfDoc.getPage(num).then(function (page) {
+      var viewport = page.getViewport({ scale: scale });
+      canvas.height = viewport.height;
+      canvas.width = viewport.width;
+      canvas2.height = viewport.height;
+      canvas2.width = viewport.width;
+      var renderContext = {
+        canvasContext: ctx,
+        viewport: viewport
+      };
+      var renderTask = page.render(renderContext);
+      renderTask.promise.then(function () {
+        pageRendering = false;
+        if (pageNumPending !== null) {
+          renderPage(pageNumPending);
+          pageNumPending = null;
+        }
+      });
     });
     document.getElementById('page_num').value = num;
-}
-function queueRenderPage(num) {
-  if (pageRendering) {
-    pageNumPending = num;
-  } else {
-    renderPage(num);
   }
-}
-function onPrevPage() {
-  if (pageNum <= 1) {
-    return;
+  function queueRenderPage(num) {
+    if (pageRendering) {
+      pageNumPending = num;
+    } else {
+      renderPage(num);
+    }
   }
-  pageNum--;
-  queueRenderPage(pageNum);
-}
-document.getElementById('prev').addEventListener('click', onPrevPage);
-function onNextPage() {
-  if (pageNum >= pdfDoc.numPages) {
-    return;
+  function onPrevPage() {
+    if (pageNum <= 1) {
+      return;
+    }
+    pageNum--;
+    queueRenderPage(pageNum);
   }
-  pageNum++;
-  queueRenderPage(pageNum);
-}
-document.getElementById('next').addEventListener('click', onNextPage);
-function handleFileSelect(evt) {
+  document.getElementById('prev').addEventListener('click', onPrevPage);
+  function onNextPage() {
+    if (pageNum >= pdfDoc.numPages) {
+      return;
+    }
+    pageNum++;
+    queueRenderPage(pageNum);
+  }
+  document.getElementById('next').addEventListener('click', onNextPage);
+  function handleFileSelect(evt) {
     var files = evt.target.files;
     for (var i = 0, f; f = files[i]; i++) {
-        if (!f.type.match('application/pdf')) {
-            continue;
-        }
+      if (!f.type.match('application/pdf')) {
+        continue;
+      }
 
-        var reader = new FileReader();
-        reader.onload = (function(theFile) {
-            return function(e) {
-                var loadingTask = pdfjsLib.getDocument({
-                    url:e.target.result,
-                    cMapUrl:'https://mozilla.github.io/pdf.js/web/cmaps/',
-                    cMapPacked:true});
-                loadingTask.promise.then(function(pdfDoc_) {
-                    pdfDoc = pdfDoc_;
-                    document.getElementById('page_count').textContent = pdfDoc.numPages;
-                    renderPage(pageNum);
-                });
-            };
-        })(f);
-        
-        reader.readAsDataURL(f);
+      var reader = new FileReader();
+      reader.onload = (function (theFile) {
+        return function (e) {
+          var loadingTask = pdfjsLib.getDocument({
+            url: e.target.result,
+            cMapUrl: 'https://mozilla.github.io/pdf.js/web/cmaps/',
+            cMapPacked: true
+          });
+          loadingTask.promise.then(function (pdfDoc_) {
+            pdfDoc = pdfDoc_;
+            document.getElementById('page_count').textContent = pdfDoc.numPages;
+            renderPage(pageNum);
+          });
+        };
+      })(f);
+
+      reader.readAsDataURL(f);
     }
-}
+  }
 
-document.body.addEventListener('change', handleFileSelect, false);
-document.getElementById('canvas2').onclick = function( event ) {
+  document.body.addEventListener('change', handleFileSelect, false);
+  document.getElementById('canvas2').onclick = function (event) {
     var clickX = event.pageX;
     var clickY = event.pageY;
-    var clientRect = this.getBoundingClientRect() ;
-	var positionX = clientRect.left + window.pageXOffset ;
-	var positionY = clientRect.bottom + window.pageYOffset ;
-	var x1 = 210 * (clickX - positionX) / clientRect.width;
-	var y1 = 297 * (positionY - clickY) / clientRect.height;
-	var x2 = 210 * (rect.startX + clientRect.left - positionX) / clientRect.width;
-	var y2 = 297 * (positionY - rect.startY - clientRect.top) / clientRect.height;
-    document.getElementById('sxpos').value = Math.round(Math.min(x1,x2));
-    document.getElementById('sypos').value = Math.round(Math.min(y1,y2));
-    document.getElementById('expos').value = Math.round(Math.max(x1,x2));
-    document.getElementById('eypos').value = Math.round(Math.max(y1,y2));
-}
-
-function init() {
-  canvas2.addEventListener('mousedown', mouseDown, false);
-  canvas2.addEventListener('mouseup', mouseUp, false);
-  canvas2.addEventListener('mousemove', mouseMove, false);
-}
-
-function mouseDown(e) {
-  rect.startX = e.pageX - this.parentNode.offsetLeft;
-  rect.startY = e.pageY - this.parentNode.offsetTop;
-  drag = true;
-}
-
-function mouseUp() {
-  drag = false;
-    //ctx.clearRect(0,0,canvas.width,canvas.height);
-}
-function mouseMove(e) {
-  if (drag) {
-    rect.w = (e.pageX - this.parentNode.offsetLeft) - rect.startX;
-    rect.h = (e.pageY - this.parentNode.offsetTop) - rect.startY ;
-    ctx2.clearRect(0,0,canvas2.width,canvas2.height);
-    draw();
+    var clientRect = this.getBoundingClientRect();
+    var positionX = clientRect.left + window.pageXOffset;
+    var positionY = clientRect.bottom + window.pageYOffset;
+    var x1 = 210 * (clickX - positionX) / clientRect.width;
+    var y1 = 297 * (positionY - clickY) / clientRect.height;
+    var x2 = 210 * (rect.startX + this.parentNode.offsetLeft - positionX) / clientRect.width;
+    var y2 = 297 * (positionY - rect.startY - this.parentNode.offsetTop) / clientRect.height;
+    document.getElementById('sxpos').value = Math.round(Math.min(x1, x2));
+    document.getElementById('sypos').value = Math.round(Math.min(y1, y2));
+    document.getElementById('expos').value = Math.round(Math.max(x1, x2));
+    document.getElementById('eypos').value = Math.round(Math.max(y1, y2));
   }
-}
 
-function draw() {
-    ctx2.setLineDash([6]);
-  ctx2.strokeRect(rect.startX, rect.startY, rect.w, rect.h);
-}
+  function init() {
+    canvas2.addEventListener('mousedown', mouseDown, false);
+    canvas2.addEventListener('mouseup', mouseUp, false);
+    canvas2.addEventListener('mousemove', mouseMove, false);
+  }
 
-init();
+  function mouseDown(e) {
+    rect.startX = e.pageX - this.parentNode.offsetLeft;
+    rect.startY = e.pageY - this.parentNode.offsetTop;
+    drag = true;
+  }
+
+  function mouseUp() {
+    drag = false;
+    //ctx.clearRect(0,0,canvas.width,canvas.height);
+  }
+  function mouseMove(e) {
+    if (drag) {
+      rect.w = (e.pageX - this.parentNode.offsetLeft) - rect.startX;
+      rect.h = (e.pageY - this.parentNode.offsetTop) - rect.startY;
+      ctx2.clearRect(0, 0, canvas2.width, canvas2.height);
+      draw();
+    }
+  }
+
+  function draw() {
+    ctx2.setLineDash([2]);
+    ctx2.strokeRect(rect.startX, rect.startY, rect.w, rect.h);
+  }
+
+  init();
 </script>
+
 </html>
