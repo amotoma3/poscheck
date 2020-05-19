@@ -45,7 +45,36 @@
       position: relative;
     }
 
-    .help {
+    .update-help {
+      display: none;
+      width: 150px;
+      position: absolute;
+      top: -15px;
+      left: 245px;
+      padding: 10px;
+      border-radius: 3px;
+      background: #ddd;
+      color: #444;
+    }
+
+    .update-help:after {
+      position: absolute;
+      width: 0;
+      height: 0;
+      left: -19px;
+      bottom: 20px;
+      border: solid transparent;
+      border-right-color: #ddd;
+      border-width: 10px;
+      pointer-events: none;
+      content: " ";
+    }
+
+    .update input:hover+.update-help {
+      display: block;
+    }
+
+    .clip-help {
       display: none;
       width: 270px;
       position: absolute;
@@ -53,24 +82,24 @@
       left: 245px;
       padding: 10px;
       border-radius: 3px;
-      background: #bbb;
-      color: #555;
+      background: #ddd;
+      color: #444;
     }
 
-    .help:after {
+    .clip-help:after {
       position: absolute;
       width: 0;
       height: 0;
       left: -19px;
       bottom: 5px;
       border: solid transparent;
-      border-right-color: #bbb;
+      border-right-color: #ddd;
       border-width: 10px;
       pointer-events: none;
       content: " ";
     }
 
-    .clip button:hover+.help {
+    .clip button:hover+.clip-help {
       display: block;
     }
 
@@ -118,39 +147,43 @@
     </div>
     <div class="fl" id="pos_div">
       <div class="fl mr5 tc">
-        <div class="mb5">
+        <div class="update mb5">
           <input type="text" class="w50" id="sxpos" />
+          <p class="update-help">値は変更可能</p>
         </div>
         <div class="clip">
           <button id="sx_btn">左下X</button>
-          <p class="help">クリックでクリップボードにコピー</p>
+          <p class="clip-help">クリックでクリップボードにコピー</p>
         </div>
       </div>
       <div class="fl mr5 tc">
-        <div class="mb5">
+        <div class="update mb5">
           <input type="text" class="w50" id="sypos" />
+          <p class="update-help">値は変更可能</p>
         </div>
         <div class="clip">
           <button id="sy_btn">左下Y</button>
-          <p class="help">クリックでクリップボードにコピー</p>
+          <p class="clip-help">クリックでクリップボードにコピー</p>
         </div>
       </div>
       <div class="fl mr5 tc">
-        <div class="mb5">
+        <div class="update mb5">
           <input type="text" class="w50" id="expos" />
+          <p class="update-help">値は変更可能</p>
         </div>
         <div class="clip">
           <button id="ex_btn">右上X</button>
-          <p class="help">クリックでクリップボードにコピー</p>
+          <p class="clip-help">クリックでクリップボードにコピー</p>
         </div>
       </div>
       <div class="fl mr5 tc">
-        <div class="mb5">
+        <div class="update mb5">
           <input type="text" class="w50" id="eypos" />
+          <p class="update-help">値は変更可能</p>
         </div>
         <div class="clip">
           <button id="ey_btn">右上Y</button>
-          <p class="help">クリックでクリップボードにコピー</p>
+          <p class="clip-help">クリックでクリップボードにコピー</p>
         </div>
       </div>
     </div>
@@ -255,12 +288,16 @@
       reader.readAsDataURL(f);
     }
   }
-  document.body.addEventListener('change', handleFileSelect, false);
+  document.getElementById('files').addEventListener('change', handleFileSelect, false);
 
   function init() {
     canvas2.addEventListener('mousedown', mouseDown, false);
     canvas2.addEventListener('mouseup', mouseUp, false);
     canvas2.addEventListener('mousemove', mouseMove, false);
+    document.getElementById('sxpos').addEventListener('keyup', posChange, false);
+    document.getElementById('sypos').addEventListener('keyup', posChange, false);
+    document.getElementById('expos').addEventListener('keyup', posChange, false);
+    document.getElementById('eypos').addEventListener('keyup', posChange, false);
   }
   function convertClickToPos(cx, cy) {
     var clientRect = canvas2.getBoundingClientRect();
@@ -310,7 +347,20 @@
     }
   }
   function posChange() {
-
+    drag = false;
+    var sxpos = document.getElementById('sxpos').value;
+    var sypos = document.getElementById('sypos').value;
+    var expos = document.getElementById('expos').value;
+    var eypos = document.getElementById('eypos').value;
+    if (sxpos == '' || sypos == '' || expos == '' || eypos == '') return;
+    var scxy = convertPosToClick(sxpos, sypos);
+    var ecxy = convertPosToClick(expos, eypos);
+    rect.startX = scxy[0];
+    rect.startY = scxy[1];
+    rect.w = ecxy[0] - scxy[0];
+    rect.h = ecxy[1] - scxy[1];
+    ctx2.clearRect(0, 0, canvas2.width, canvas2.height);
+    draw();
   }
   function draw() {
     ctx2.strokeStyle = 'red';
