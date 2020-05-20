@@ -413,9 +413,16 @@
     ctx2.setLineDash([2]);
     ctx2.strokeRect(rect.startX - wrapper.offsetLeft, rect.startY - wrapper.offsetTop, rect.w, rect.h);
     ctx2.strokeStyle = 'blue';
+    ctx2.fillStyle = 'blue';
     for (var i = 0; i < posData.length; ++i) {
       ctx2.strokeRect(posData[i].x, posData[i].y, posData[i].w, posData[i].h);
+      drawNo(posData[i].x, posData[i].y, posData[i].w, posData[i].h, i);
     }
+  }
+  function drawNo(x, y, w, h, text) {
+    ctx2.font = "10px Arial";
+    var textWidth = ctx2.measureText(text).width;
+    ctx2.fillText(text, x + (w - textWidth) / 2, y + (h + 4) / 2);
   }
   init();
 
