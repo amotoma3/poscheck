@@ -24,13 +24,14 @@
 
     #sidebar {
       position: fixed;
-      transition: 0.2s;
       top: 75px;
       left: -400px;
+      z-index: 1;
       width: 400px;
       height: 100%;
       background-color: #555;
       box-shadow: inset -1px 0 0 rgba(255, 255, 255, 0.05), 1px 0 0 rgba(0, 0, 0, 0.15);
+      transition: 0.2s;
     }
 
     #outer_container.sideopened>#sidebar {
@@ -229,6 +230,7 @@
       </div>
       <div>
         <button id="addpos">追加</button>
+        <span>（Aキーでも可）</span>
         <div id="pos_list"></div>
       </div>
     </div>
@@ -409,9 +411,11 @@
     draw();
   }
   function draw() {
-    ctx2.strokeStyle = 'red';
-    ctx2.setLineDash([2]);
-    ctx2.strokeRect(rect.startX - wrapper.offsetLeft, rect.startY - wrapper.offsetTop, rect.w, rect.h);
+    if('startX' in rect) {
+      ctx2.strokeStyle = 'red';
+      ctx2.setLineDash([2]);
+      ctx2.strokeRect(rect.startX - wrapper.offsetLeft, rect.startY - wrapper.offsetTop, rect.w, rect.h);
+    }
     ctx2.strokeStyle = 'blue';
     ctx2.fillStyle = 'blue';
     for (var i = 0; i < posData.length; ++i) {
@@ -467,8 +471,21 @@
     };
     posData.push(pos);
     document.getElementById('pos_list').innerHTML += pos.x + '<br>';
+
+    document.getElementById('sxpos').value = '';
+    document.getElementById('sypos').value = '';
+    document.getElementById('expos').value = '';
+    document.getElementById('eypos').value = '';
+    rect = {};
+    ctx2.clearRect(0, 0, canvas2.width, canvas2.height);
+    draw();
   }
   document.getElementById('addpos').addEventListener('click', addPosition);
+
+  function pushKeyA(e) {
+    if(e.code == 'KeyA') addPosition();
+  }
+  document.addEventListener('keydown', pushKeyA);
 </script>
 
 </html>
