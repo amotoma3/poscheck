@@ -38,6 +38,19 @@
       left: 0;
     }
 
+    #pos_table {
+      font-size: 0.9em;
+      border-collapse: collapse;
+    }
+
+    #pos_tbody {
+      text-align: center;
+    }
+
+    #pos_tbody td {
+      border-top: 1px solid #ddd;
+    }
+
     #sidetab {
       position: absolute;
       left: 400px;
@@ -229,9 +242,24 @@
         位置リスト
       </div>
       <div>
+        <input type="text" class="w50o" id="no" value="1" />
+        <input type="text" class="w50o" id="sortNo" value="1" />
         <button id="addpos">追加</button>
         <span>（Aキーでも可）</span>
-        <div id="pos_list"></div>
+        <div>
+          <table id="pos_table">
+            <thead>
+              <td>No.</td>
+              <td>ソート順</td>
+              <td>ページ</td>
+              <td>左下X</td>
+              <td>左下Y</td>
+              <td>右上X</td>
+              <td>右上Y</td>
+            </thead>
+            <tbody id="pos_tbody"></tbody>
+          </table>
+        </div>
       </div>
     </div>
     <div id="container">
@@ -346,6 +374,15 @@
     document.getElementById('sypos').addEventListener('keyup', posChange, false);
     document.getElementById('expos').addEventListener('keyup', posChange, false);
     document.getElementById('eypos').addEventListener('keyup', posChange, false);
+
+    var text = '上でファイルを選択してください';
+    ctx.strokeStyle = '#eee';
+    ctx.setLineDash([4]);
+    ctx.strokeRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#ccc';
+    ctx.font = "12px Arial";
+    var textWidth = ctx.measureText(text).width;
+    ctx.fillText(text, (canvas.width - textWidth) / 2, (canvas.height + 12) / 2);
   }
   function convertClickToPos(cx, cy) {
     var clientRect = canvas2.getBoundingClientRect();
@@ -411,7 +448,7 @@
     draw();
   }
   function draw() {
-    if('startX' in rect) {
+    if ('startX' in rect) {
       ctx2.strokeStyle = 'red';
       ctx2.setLineDash([2]);
       ctx2.strokeRect(rect.startX - wrapper.offsetLeft, rect.startY - wrapper.offsetTop, rect.w, rect.h);
@@ -420,13 +457,13 @@
     ctx2.fillStyle = 'blue';
     for (var i = 0; i < posData.length; ++i) {
       ctx2.strokeRect(posData[i].x, posData[i].y, posData[i].w, posData[i].h);
-      drawNo(posData[i].x, posData[i].y, posData[i].w, posData[i].h, i);
+      drawText(posData[i].x, posData[i].y, posData[i].w, posData[i].h, posData[i].no);
     }
   }
-  function drawNo(x, y, w, h, text) {
+  function drawText(x, y, w, h, text) {
     ctx2.font = "10px Arial";
     var textWidth = ctx2.measureText(text).width;
-    ctx2.fillText(text, x + (w - textWidth) / 2, y + (h + 4) / 2);
+    ctx2.fillText(text, x + (w - textWidth) / 2, y + (h + 10) / 2);
   }
   init();
 
@@ -464,13 +501,17 @@
     if (sxpos == '' || sypos == '' || expos == '' || eypos == '') return;
     var scxy = convertPosToClick(sxpos, sypos);
     var ecxy = convertPosToClick(expos, eypos);
+    var no = document.getElementById('no').value || 1;
+    var sortNo = document.getElementById('sortNo').value || 1;
     var pos = {
+      no: no, sortNo: sortNo, pageNo: pageNum,
       sxpos: sxpos, sypos: sypos, expos: expos, eypos: eypos,
       x: scxy[0] - wrapper.offsetLeft, y: scxy[1] - wrapper.offsetTop,
       w: ecxy[0] - scxy[0], h: ecxy[1] - scxy[1]
     };
     posData.push(pos);
-    document.getElementById('pos_list').innerHTML += pos.x + '<br>';
+    document.getElementById('no').value = parseInt(no) + 1;
+    document.getElementById('sortNo').value = parseInt(sortNo) + 1;
 
     document.getElementById('sxpos').value = '';
     document.getElementById('sypos').value = '';
@@ -479,11 +520,28 @@
     rect = {};
     ctx2.clearRect(0, 0, canvas2.width, canvas2.height);
     draw();
+    buildPosTable();
+  }
+  function buildPosTable() {
+    document.getElementById('pos_tbody').innerHTML = '';
+    var tbody = document.getElementById('pos_tbody');
+    for (var i = 0; i < posData.length; ++i) {
+      var values = [posData[i].no, posData[i].sortNo, posData[i].pageNo,
+      posData[i].sxpos, posData[i].sypos, posData[i].expos, posData[i].eypos]
+      var row = document.createElement('tr');
+      for (var j = 0; j < values.length; ++j) {
+        var cell = document.createElement('td');
+        cell.innerText = values[j];
+        row.appendChild(cell);
+      }
+      tbody.appendChild(row);
+    }
   }
   document.getElementById('addpos').addEventListener('click', addPosition);
 
   function pushKeyA(e) {
-    if(e.code == 'KeyA') addPosition();
+    console.log(e);
+    if (e.key == 'a') addPosition();
   }
   document.addEventListener('keydown', pushKeyA);
 </script>
