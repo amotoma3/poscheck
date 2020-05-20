@@ -29,7 +29,6 @@
       left: -400px;
       width: 400px;
       height: 100%;
-      writing-mode: vertical-rl;
       background-color: #555;
       box-shadow: inset -1px 0 0 rgba(255, 255, 255, 0.05), 1px 0 0 rgba(0, 0, 0, 0.15);
     }
@@ -47,6 +46,7 @@
       background-color: #555;
       box-shadow: inset -1px -1px 0 rgba(255, 255, 255, 0.05), 1px 1px 0 rgba(0, 0, 0, 0.15);
       cursor: pointer;
+      writing-mode: vertical-rl;
     }
 
     #container {
@@ -227,6 +227,10 @@
       <div id="sidetab">
         ˆÊ’uƒŠƒXƒg
       </div>
+      <div>
+        <button id="addpos">’Ç‰Á</button>
+        <div id="pos_list"></div>
+      </div>
     </div>
     <div id="container">
       <div id="canvas_wrapper">
@@ -253,7 +257,8 @@
     rect = {},
     drag = false,
     widthmm,
-    heightmm;
+    heightmm,
+    posData = [];
 
   function renderPage(num) {
     pageRendering = true;
@@ -407,6 +412,10 @@
     ctx2.strokeStyle = 'red';
     ctx2.setLineDash([2]);
     ctx2.strokeRect(rect.startX - wrapper.offsetLeft, rect.startY - wrapper.offsetTop, rect.w, rect.h);
+    ctx2.strokeStyle = 'blue';
+    for (var i = 0; i < posData.length; ++i) {
+      ctx2.strokeRect(posData[i].x, posData[i].y, posData[i].w, posData[i].h);
+    }
   }
   init();
 
@@ -431,10 +440,28 @@
   document.getElementById('ex_btn').addEventListener('click', clipEX);
   document.getElementById('ey_btn').addEventListener('click', clipEY);
 
-  function toggleSidebar(){
+  function toggleSidebar() {
     document.getElementById('outer_container').classList.toggle('sideopened');
   }
   document.getElementById('sidetab').addEventListener('click', toggleSidebar);
+
+  function addPosition() {
+    var sxpos = document.getElementById('sxpos').value;
+    var sypos = document.getElementById('sypos').value;
+    var expos = document.getElementById('expos').value;
+    var eypos = document.getElementById('eypos').value;
+    if (sxpos == '' || sypos == '' || expos == '' || eypos == '') return;
+    var scxy = convertPosToClick(sxpos, sypos);
+    var ecxy = convertPosToClick(expos, eypos);
+    var pos = {
+      sxpos: sxpos, sypos: sypos, expos: expos, eypos: eypos,
+      x: scxy[0] - wrapper.offsetLeft, y: scxy[1] - wrapper.offsetTop,
+      w: ecxy[0] - scxy[0], h: ecxy[1] - scxy[1]
+    };
+    posData.push(pos);
+    document.getElementById('pos_list').innerHTML += pos.x + '<br>';
+  }
+  document.getElementById('addpos').addEventListener('click', addPosition);
 </script>
 
 </html>
