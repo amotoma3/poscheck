@@ -38,9 +38,48 @@
       left: 0;
     }
 
+    #sidebar_button {
+      margin: 10px 10px 20px 10px
+    }
+
+    .add-help {
+      display: none;
+      z-index: 2;
+      width: 90px;
+      position: absolute;
+      top: 35px;
+      left: 10px;
+      padding: 10px;
+      border-radius: 3px;
+      background: #ddd;
+      color: #444;
+      font-size: 0.85em;
+    }
+
+    .add-help:after {
+      position: absolute;
+      width: 0;
+      height: 0;
+      left: 13px;
+      bottom: 40px;
+      border: solid transparent;
+      border-bottom-color: #ddd;
+      border-width: 10px;
+      pointer-events: none;
+      content: " ";
+    }
+
+    #addpos:hover+.add-help {
+      display: block;
+    }
+
     #pos_table {
       font-size: 0.9em;
       border-collapse: collapse;
+    }
+
+    #pos_table thead {
+      font-size: 0.85em;
     }
 
     #pos_tbody {
@@ -49,6 +88,56 @@
 
     #pos_tbody td {
       border-top: 1px solid #ddd;
+    }
+
+    #pos_tbody input {
+      text-align: right;
+      width: 25px;
+    }
+
+    #type-td {
+      position: relative;
+    }
+
+    .type-desc {
+      color: #ddd;
+      background-color: #333;
+      width: 12px;
+      height: 12px;
+      display: inline-block;
+      border-radius: 50%;
+      font-size: 10px;
+      text-align: center;
+      text-decoration: none;
+    }
+
+    .type-help {
+      display: none;
+      width: 150px;
+      position: absolute;
+      top: -10px;
+      left: 80px;
+      padding: 0;
+      border-radius: 3px;
+      background: #ddd;
+      color: #444;
+    }
+
+    .type-help:after {
+      position: absolute;
+      width: 0;
+      height: 0;
+      left: -19px;
+      top: 10px;
+      border: solid transparent;
+      border-right-color: #ddd;
+      border-width: 10px;
+      pointer-events: none;
+      content: ' ';
+    }
+
+    .type-desc:hover+.type-help {
+      display: block;
     }
 
     #sidetab {
@@ -94,14 +183,15 @@
 
     .update-help {
       display: none;
-      width: 150px;
+      width: 130px;
       position: absolute;
-      top: -15px;
+      top: -10px;
       left: 245px;
       padding: 10px;
       border-radius: 3px;
       background: #ddd;
       color: #444;
+      font-size: 0.85em;
     }
 
     .update-help:after {
@@ -123,14 +213,15 @@
 
     .clip-help {
       display: none;
-      width: 270px;
+      width: 240px;
       position: absolute;
-      top: -5px;
+      top: 0;
       left: 245px;
       padding: 10px;
       border-radius: 3px;
       background: #ddd;
       color: #444;
+      font-size: 0.85em;
     }
 
     .clip-help:after {
@@ -173,6 +264,56 @@
 
     .mr5 {
       margin-right: 5px;
+    }
+
+    .close {
+      position: relative;
+      display: inline-block;
+      top: 2px;
+      left: 0px;
+      width: 32px;
+      height: 32px;
+      border: 0;
+      background-color: #333;
+      border-radius: 32px;
+      margin: 0;
+      padding: 0;
+      transform: scale(0.5);
+      cursor: pointer;
+    }
+
+    .close:before {
+      content: '';
+      position: absolute;
+      display: inline-block;
+      top: 4px;
+      left: 13px;
+      width: 6px;
+      height: 24px;
+      border: 0;
+      margin: 0;
+      padding: 0;
+      background-color: #ddd;
+      transform: rotate(45deg);
+    }
+
+    .close:after {
+      content: '';
+      position: absolute;
+      display: inline-block;
+      top: 4px;
+      left: 13px;
+      width: 6px;
+      height: 24px;
+      border: 0;
+      margin: 0;
+      padding: 0;
+      background-color: #ddd;
+      transform: rotate(-45deg);
+    }
+
+    .close:hover {
+      background-color: red;
     }
   </style>
 </head>
@@ -242,22 +383,50 @@
         位置リスト
       </div>
       <div>
-        <input type="text" class="w50o" id="no" value="1" />
-        <input type="text" class="w50o" id="sortNo" value="1" />
-        <button id="addpos">追加</button>
-        <span>（Aキーでも可）</span>
+        <div id="sidebar_button">
+          <div class="fl mr20">
+            <button id="addpos">追加</button>
+            <p class="add-help">Aキーでも可</p>
+          </div>
+          <div class="fl mr20">
+            番号：
+            <input type="text" class="w50o" id="no" value="1" />
+          </div>
+          <div>
+            並び順：
+            <input type="text" class="w50o" id="sortNo" value="1" />
+          </div>
+        </div>
         <div>
           <table id="pos_table">
             <thead>
-              <td>No.</td>
-              <td>ソート順</td>
-              <td>ページ</td>
-              <td>左下X</td>
-              <td>左下Y</td>
-              <td>右上X</td>
-              <td>右上Y</td>
+              <tr>
+                <td></td>
+                <td>番号</td>
+                <td>並び順</td>
+                <td>ページ</td>
+                <td>左下X</td>
+                <td>左下Y</td>
+                <td>右上X</td>
+                <td>右上Y</td>
+                <td id="type-td">
+                  データ型
+                  <span class="type-desc">?</span>
+                  <div class="type-help">
+                    <ul>
+                      <li>ここに説明を書く</li>
+                    </ul>
+                  </div>
+                </td>
+              </tr>
             </thead>
-            <tbody id="pos_tbody"></tbody>
+            <tbody id="pos_tbody">
+              <tr>
+                <td colspan="9" style="font-size: 0.85em;">
+                  データがありません
+                </td>
+              </tr>
+            </tbody>
           </table>
         </div>
       </div>
@@ -522,6 +691,16 @@
     draw();
     buildPosTable();
   }
+  function clipInput() {
+    this.select();
+    document.execCommand('Copy');
+  }
+  function removePos() {
+    posData.splice(this.value, 1);
+    ctx2.clearRect(0, 0, canvas2.width, canvas2.height);
+    draw();
+    buildPosTable();
+  }
   function buildPosTable() {
     document.getElementById('pos_tbody').innerHTML = '';
     var tbody = document.getElementById('pos_tbody');
@@ -529,9 +708,21 @@
       var values = [posData[i].no, posData[i].sortNo, posData[i].pageNo,
       posData[i].sxpos, posData[i].sypos, posData[i].expos, posData[i].eypos]
       var row = document.createElement('tr');
+      var cell = document.createElement('td');
+      var button = document.createElement('button');
+      button.value = i;
+      button.className = 'close';
+      button.addEventListener('click', removePos);
+      cell.appendChild(button);
+      row.appendChild(cell);
       for (var j = 0; j < values.length; ++j) {
         var cell = document.createElement('td');
-        cell.innerText = values[j];
+        var input = document.createElement('input');
+        input.type = 'text';
+        input.value = values[j];
+        input.readOnly = true;
+        input.addEventListener('click', clipInput);
+        cell.appendChild(input);
         row.appendChild(cell);
       }
       tbody.appendChild(row);
@@ -540,7 +731,6 @@
   document.getElementById('addpos').addEventListener('click', addPosition);
 
   function pushKeyA(e) {
-    console.log(e);
     if (e.key == 'a') addPosition();
   }
   document.addEventListener('keydown', pushKeyA);
